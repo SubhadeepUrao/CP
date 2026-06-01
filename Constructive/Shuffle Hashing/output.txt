@@ -1,0 +1,7 @@
+YES : aabcaab
+YES : threetwoone
+NO
+YES : one
+NO
+NO
+NO
