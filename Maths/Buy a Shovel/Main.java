@@ -45,7 +45,7 @@ public class Main {
         } else if (last % 2 != 0) {
             // Coprime odd numbers: 1, 3, 7, 9
             int ans = (r * inv10[last]) % 10;
-            System.out.println(ans == 0 ? 10 : ans);
+            System.out.println(ans);
         } else {
             // Even numbers: 2, 4, 6, 8
             if (r % 2 == 0) {
