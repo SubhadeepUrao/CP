@@ -14,6 +14,8 @@ public class Main {
         // The net gain from taking the 'mid' largest splitters
         long currentGain = totalSum - remainingSum;
 
+        // long currentGain = x * (2 * k - 1 - x) / 2;
+
         return currentGain >= totalNeeded;
     }
 
