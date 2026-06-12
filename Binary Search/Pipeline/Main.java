@@ -2,10 +2,6 @@ public class Main {
     private static long n = 0, k = 0;
 
     private static boolean isValid(long x) {
-        // x < k is already valid so no need to check
-        if (x < 1)
-            return false;
-
         long maxsum = x * (2 * k - x + 1) / 2;
         long target = n + x - 1;
         return target <= maxsum;
