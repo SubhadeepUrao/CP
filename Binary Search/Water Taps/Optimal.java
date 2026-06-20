@@ -1,19 +1,4 @@
 public class Optimal {
-    private static void reverseArrays(int[] capacity, int[] relative_temp, int start, int end) {
-        while (start < end) {
-            int X = capacity[start];
-            capacity[start] = capacity[end];
-            capacity[end] = X;
-
-            X = relative_temp[start];
-            relative_temp[start] = relative_temp[end];
-            relative_temp[end] = X;
-
-            ++start;
-            --end;
-        }
-    }
-
     private static void solve(FastScanner sc) {
         int n = sc.nextInt();
         int T = sc.nextInt();
@@ -21,38 +6,36 @@ public class Optimal {
         double volume = 0d;
 
         int[] capacity = new int[n];
-        for (int i = 0; i < n; ++i)
-            capacity[i] = sc.nextInt();
-        int[] relative_temp = new int[n];
-        long[] combined = new long[n];
         for (int i = 0; i < n; ++i) {
-            relative_temp[i] = sc.nextInt() - T;
-            combined[i] = ((long) relative_temp[i] << 32) | (capacity[i] & 0xFFFF_FFFFL);
+            capacity[i] = sc.nextInt();
         }
 
+        long[] combined = new long[n];
+        for (int i = 0; i < n; ++i) {
+            int relative_temp = sc.nextInt() - T;
+            // Pack relative_temp in upper 32 bits and capacity in lower 32 bits
+            combined[i] = ((long) relative_temp << 32) | (capacity[i] & 0xFFFF_FFFFL);
+        }
+
+        // Sort primarily by relative_temp (ascending order: cold -> neutral -> hot)
         Arrays.sort(combined);
 
-        int hotIdx = n, neutralIdx = n;
-        long hotEnergy = 0l, coldEnergy = 0l;
-        long hotVolume = 0l, coldVolume = 0l;
+        long hotEnergy = 0L, coldEnergy = 0L;
+        long hotVolume = 0L, coldVolume = 0L;
 
-        // fill vessel with max capacity at temp 0
-        // segregate combined array
-        for (int i = n - 1; i >= 0; --i) {
-            relative_temp[i] = (int) (combined[i] >> 32);
-            capacity[i] = (int) (combined[i] & 0xFFFF_FFFFl);
+        // Calculate initial total capacities and energies
+        for (int i = 0; i < n; ++i) {
+            int relTemp = (int) (combined[i] >> 32);
+            long cap = combined[i] & 0xFFFF_FFFFL;
 
-            if (relative_temp[i] == 0) {
-                neutralIdx = i;
-                volume += capacity[i];
-            } else if (relative_temp[i] > 0) {
-                hotIdx = i;
-                hotEnergy += (long) capacity[i] * relative_temp[i];
-                hotVolume += capacity[i];
+            if (relTemp == 0) {
+                volume += cap; // Neutral taps are always fully utilized
+            } else if (relTemp > 0) {
+                hotEnergy += cap * relTemp;
+                hotVolume += cap;
             } else {
-                relative_temp[i] = -relative_temp[i];
-                coldEnergy += (long) capacity[i] * relative_temp[i];
-                coldVolume += capacity[i];
+                coldEnergy += cap * (-relTemp); // Use absolute value for energy calculation
+                coldVolume += cap;
             }
         }
 
@@ -63,37 +46,57 @@ public class Optimal {
             return;
         }
 
-        long energyLimit = 0l;
-        int begin = 0, end = 0;
+        // If cold energy is less, keep all cold water and trim the hot water
         if (coldEnergy < hotEnergy) {
             volume += coldVolume;
-            energyLimit = coldEnergy;
-            begin = hotIdx;
-            end = n;
-        } else {
-            volume += hotVolume;
-            energyLimit = hotEnergy;
-            begin = 0;
-            // If there were no neutral taps, the cold block ends at hotIdx
-            end = (neutralIdx == n) ? hotIdx : neutralIdx;
+            long energyLimit = coldEnergy;
+            long currEnergy = 0L;
 
-            // reverse cold taps for generalization
-            reverseArrays(capacity, relative_temp, 0, end - 1);
-        }
+            // Scan hot taps from left to right (smallest positive relative_temp to largest)
+            for (int i = 0; i < n; ++i) {
+                int relTemp = (int) (combined[i] >> 32);
+                long cap = combined[i] & 0xFFFF_FFFFL;
+                if (relTemp <= 0)
+                    continue; // skip cold and neutral
 
-        long currEnergy = 0l;
-        for (int i = begin; i < end; ++i) {
-            long maxEnergy = capacity[i] * relative_temp[i];
-            long energy = currEnergy + maxEnergy;
-            if (energy <= energyLimit) {
-                volume += capacity[i];
-                currEnergy = energy;
-            } else {
-                double neededEnergy = energyLimit - currEnergy;
-                volume += neededEnergy / relative_temp[i];
-                break;
+                long maxEnergy = cap * relTemp;
+                if (currEnergy + maxEnergy <= energyLimit) {
+                    volume += cap;
+                    currEnergy += maxEnergy;
+                } else {
+                    double neededEnergy = energyLimit - currEnergy;
+                    volume += neededEnergy / relTemp;
+                    break;
+                }
             }
         }
+        // If hot energy is less (or equal), keep all hot water and trim the cold water
+        else {
+            volume += hotVolume;
+            long energyLimit = hotEnergy;
+            long currEnergy = 0L;
+
+            // Scan cold taps from right to left (least negative relative_temp to most
+            // negative)
+            for (int i = n - 1; i >= 0; --i) {
+                int relTemp = (int) (combined[i] >> 32);
+                long cap = combined[i] & 0xFFFF_FFFFL;
+                if (relTemp >= 0)
+                    continue; // skip hot and neutral
+
+                long absTemp = -relTemp; // Work with absolute value
+                long maxEnergy = cap * absTemp;
+                if (currEnergy + maxEnergy <= energyLimit) {
+                    volume += cap;
+                    currEnergy += maxEnergy;
+                } else {
+                    double neededEnergy = energyLimit - currEnergy;
+                    volume += neededEnergy / absTemp;
+                    break;
+                }
+            }
+        }
+
         System.out.printf("%.15f\n", volume);
     }
 }
