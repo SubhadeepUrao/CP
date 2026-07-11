@@ -4,59 +4,21 @@ import java.io.InputStreamReader;
 import java.util.StringTokenizer;
 
 public class Main {
-    public static void main(String[] args) {
-        // Using Fast Scanner to handle large inputs efficiently
-        FastScanner sc = new FastScanner();
-        solve(sc);
-    }
-
     private static void solve(FastScanner sc) {
-        // YOUR CODE LIES HERE...
-    }
+        char[] stack = new char[1_00_000];
+        int top = -1;
+        char[] str = sc.next().toCharArray();
 
-    // Fast I/O Utility Class
-    static class FastScanner {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer("");
-
-        String next() {
-            while (!st.hasMoreTokens()) {
-                try {
-                    String line = br.readLine();
-                    if (line == null)
-                        return null;
-                    st = new StringTokenizer(line);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        for (char ch : str) {
+            if (top < 0)
+                stack[++top] = ch;
+            else {
+                if (stack[top] == ch)
+                    --top;
+                else
+                    stack[++top] = ch;
             }
-            return st.nextToken();
         }
-
-        boolean hasNext() {
-            while (!st.hasMoreTokens()) {
-                try {
-                    String line = br.readLine();
-                    if (line == null)
-                        return false;
-                    st = new StringTokenizer(line);
-                } catch (IOException e) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        int nextInt() {
-            return Integer.parseInt(next());
-        }
-
-        long nextLong() {
-            return Long.parseLong(next());
-        }
-
-        double nextDouble() {
-            return Double.parseDouble(next());
-        }
+        System.out.println(top < 0 ? "Yes" : "No");
     }
 }
