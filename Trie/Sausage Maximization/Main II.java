@@ -1,3 +1,4 @@
+// no TLE
 public class Main {
 
     static final int BITS = 60;
